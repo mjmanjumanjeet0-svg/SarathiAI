@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#5b4bdb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>सारथी AI</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#f5f7fb;color:#172033;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{min-height:100vh}.app{max-width:520px;margin:auto;min-height:100vh;background:#f5f7fb;padding-bottom:82px}
+header{padding:22px 18px 20px;background:linear-gradient(145deg,#5544d5,#8173f4);color:#fff;border-radius:0 0 28px 28px}
+.top{display:flex;align-items:center;justify-content:space-between}.logo{font-size:28px;font-weight:800}.hello{margin-top:5px;opacity:.9;font-size:14px}
+.iconbtn{width:44px;height:44px;border-radius:50%;border:0;background:#ffffff24;color:#fff;font-size:21px}
+main{padding:15px}.welcome{font-size:22px;font-weight:750;margin:4px 2px 14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{background:#fff;border:1px solid #e5e8f0;border-radius:19px;padding:16px;box-shadow:0 5px 18px #1720330b}
+.feature{min-height:145px}.emoji{font-size:30px}.feature h3{margin:9px 0 3px;font-size:17px}.muted{color:#697386;font-size:13px;line-height:1.4}
+button{border:0;border-radius:13px;padding:11px 14px;background:#5b4bdb;color:#fff;font-weight:700;font-size:14px}
+.feature button{width:100%;margin-top:12px}.secondary{background:#eceaff!important;color:#4739b8!important}.gray{background:#edf0f4!important;color:#344054!important}
+.panel{display:none}.panel.active{display:block}.back{margin-bottom:12px;background:#edf0f4;color:#344054}
+.row{display:flex;gap:8px;margin-top:9px}input,textarea,select{width:100%;border:1px solid #e0e4ed;border-radius:13px;padding:13px;font:inherit;outline:none;background:#fff}textarea{min-height:100px;resize:vertical}
+.messages{height:54vh;min-height:300px;overflow:auto;background:#fafbfe;border-radius:15px;padding:8px}.msg{max-width:90%;padding:11px 13px;border-radius:15px;margin:8px 0;white-space:pre-wrap;line-height:1.45}.user{margin-left:auto;background:#e9e5ff}.bot{background:#fff;border:1px solid #e2e5ec}
+.chatbar{position:sticky;bottom:5px;background:#f5f7fb;padding:8px 0 2px}.chatbar .row{align-items:center}.chatbar button{min-width:46px}.mic{font-size:19px;padding:11px}
+.note,.rem{border:1px solid #e1e5ed;border-radius:13px;padding:12px;margin-top:9px;background:#fff}.small{font-size:12px;color:#697386}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:68px;background:#fff;border-top:1px solid #e1e5ed;display:flex;justify-content:space-around;align-items:center;z-index:10}
+.bottom button{background:transparent;color:#667085;padding:7px 8px;font-size:11px}.bottom button b{display:block;font-size:20px;line-height:22px}.bottom button.active{color:#5b4bdb}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#172033;color:white;padding:10px 14px;border-radius:12px;display:none;z-index:20;max-width:90%}
+h2{margin:5px 0 12px}
+@media(max-width:360px){.grid{gap:8px}.card{padding:13px}.feature{min-height:140px}.welcome{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="top"><div><div class="logo">🧭 सारथी AI</div><div class="hello">तुम्हारा personal AI helper</div></div><button class="iconbtn" onclick="show('settings')">⚙️</button></div></header>
+
+<main>
+<section id="home" class="panel active">
+<div class="welcome">नमस्ते 👋 आज क्या करना है?</div>
+<div class="grid">
+<div class="card feature"><div class="emoji">🤖</div><h3>AI Chat</h3><div class="muted">सारथी से सवाल पूछो</div><button onclick="show('chat')">Chat खोलें</button></div>
+<div class="card feature"><div class="emoji">🎙️</div><h3>Voice</h3><div class="muted">बोलकर सवाल पूछो</div><button class="secondary" onclick="show('chat');startVoice()">बोलें</button></div>
+<div class="card feature"><div class="emoji">📚</div><h3>Study</h3><div class="muted">पढ़ाई और सवाल</div><button class="secondary" onclick="show('study')">Study</button></div>
+<div class="card feature"><div class="emoji">📝</div><h3>Notes</h3><div class="muted">जरूरी बातें सेव करो</div><button class="gray" onclick="show('notes')">Notes</button></div>
+<div class="card feature"><div class="emoji">⏰</div><h3>Reminder</h3><div class="muted">काम और पढ़ाई याद रखो</div><button class="gray" onclick="show('rem')">Reminder</button></div>
+<div class="card feature"><div class="emoji">🧮</div><h3>Calculator</h3><div class="muted">झटपट हिसाब</div><button class="gray" onclick="show('calc')">Calculator</button></div>
+</div>
+</section>
+
+<section id="chat" class="panel"><button class="back" onclick="show('home')">← वापस</button><div class="card"><h2>🤖 सारथी से बात करें</h2><div id="status" class="small">Settings में AI connection सेट करें।</div><div id="messages" class="messages"><div class="msg bot">नमस्ते! मैं सारथी हूँ। अपना सवाल लिखो या 🎙️ दबाकर बोलो।</div></div><div class="chatbar"><div class="row"><input id="chatInput" placeholder="अपना सवाल लिखें..."><button class="mic" onclick="startVoice()">🎙️</button><button onclick="sendChat()">➤</button></div></div></div></section>
+
+<section id="study" class="panel"><button class="back" onclick="show('home')">← वापस</button><div class="card"><h2>📚 Study Mode</h2><p class="muted">Topic लिखो। सारथी उससे सवाल बनाएगा।</p><input id="topic" placeholder="जैसे: 1857 का विद्रोह"><button style="margin-top:9px;width:100%" onclick="study()">सवाल बनाओ</button><div id="studyOut" class="note" style="display:none"></div></div></section>
+
+<section id="notes" class="panel"><button class="back" onclick="show('home')">← वापस</button><div class="card"><h2>📝 Notes</h2><input id="noteTitle" placeholder="Note का नाम"><textarea id="noteText" placeholder="यहाँ note लिखें..."></textarea><button style="margin-top:9px;width:100%" onclick="saveNote()">💾 सेव करें</button><div id="notesList"></div></div></section>
+
+<section id="rem" class="panel"><button class="back" onclick="show('home')">← वापस</button><div class="card"><h2>⏰ Reminders</h2><input id="remText" placeholder="क्या याद रखना है?"><input id="remTime" type="datetime-local" style="margin-top:8px"><button style="margin-top:9px;width:100%" onclick="addReminder()">⏰ Reminder जोड़ें</button><button class="secondary" style="margin-top:8px;width:100%" onclick="notifyPermission()">🔔 Notification अनुमति</button><div id="remList"></div></div></section>
+
+<section id="calc" class="panel"><button class="back" onclick="show('home')">← वापस</button><div class="card"><h2>🧮 Calculator</h2><input id="display" readonly style="font-size:22px"><div class="grid" style="margin-top:9px"><button onclick="a('7')">7</button><button onclick="a('8')">8</button><button onclick="a('9')">9</button><button class="secondary" onclick="a('/')">÷</button><button onclick="a('4')">4</button><button onclick="a('5')">5</button><button onclick="a('6')">6</button><button class="secondary" onclick="a('*')">×</button><button onclick="a('1')">1</button><button onclick="a('2')">2</button><button onclick="a('3')">3</button><button class="secondary" onclick="a('-')">−</button><button onclick="a('0')">0</button><button onclick="a('.')">.</button><button onclick="calc()">=</button><button class="secondary" onclick="a('+')">+</button></div><button class="gray" style="margin-top:9px;width:100%" onclick="document.getElementById('display').value=''">Clear</button></div></section>
+
+<section id="settings" class="panel"><button class="back" onclick="show('home')">← वापस</button><div class="card"><h2>⚙️ AI Settings</h2><p class="muted">असली AI के लिए अपने AI provider का endpoint, key और model यहाँ डालें।</p><input id="endpoint" placeholder="API Endpoint"><input id="key" type="password" placeholder="API Key" style="margin-top:8px"><input id="model" placeholder="Model name" style="margin-top:8px"><button style="margin-top:9px;width:100%" onclick="saveSettings()">सेव करें</button><p class="small">यह mobile prototype settings को इसी browser में local storage में रखता है। Production app में key को backend में रखना ज्यादा सुरक्षित है।</p></div></section>
+</main>
+
+<nav class="bottom">
+<button id="navhome" class="active" onclick="show('home')"><b>⌂</b>Home</button>
+<button onclick="show('chat')"><b>🤖</b>Chat</button>
+<button onclick="show('study')"><b>📚</b>Study</button>
+<button onclick="show('notes')"><b>📝</b>Notes</button>
+<button onclick="show('rem')"><b>⏰</b>Reminder</button>
+</nav>
+</div><div id="toast" class="toast"></div>
+
+<script>
+const ids=['home','chat','study','notes','rem','calc','settings'];let last='';
+function show(id){ids.forEach(x=>document.getElementById(x).classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.bottom button').forEach(x=>x.classList.remove('active'));if(id==='home')document.getElementById('navhome').classList.add('active');if(id==='notes')renderNotes();if(id==='rem')renderRem();window.scrollTo(0,0)}
+function toast(t){let x=document.getElementById('toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2300)}
+function addMsg(t,c){let d=document.createElement('div');d.className='msg '+c;d.textContent=t;document.getElementById('messages').appendChild(d);document.getElementById('messages').scrollTop=999999;if(c==='bot')last=t}
+function getS(){return{e:localStorage.getItem('sE')||'',k:localStorage.getItem('sK')||'',m:localStorage.getItem('sM')||''}}
+function saveSettings(){localStorage.setItem('sE',document.getElementById('endpoint').value.trim());localStorage.setItem('sK',document.getElementById('key').value.trim());localStorage.setItem('sM',document.getElementById('model').value.trim());toast('Settings सेव हो गईं');status()}
+function status(){let s=getS();document.getElementById('status').textContent=s.e&&s.k&&s.m?'✅ AI connection तैयार है':'⚠️ Settings में AI connection भरें'}
+function load(){let s=getS();document.getElementById('endpoint').value=s.e;document.getElementById('key').value=s.k;document.getElementById('model').value=s.m;status();renderNotes();renderRem()}
+async function sendChat(){let i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return;addMsg(t,'user');i.value='';let s=getS();if(!(s.e&&s.k&&s.m)){addMsg('अभी AI connection सेट नहीं है। ⚙️ Settings खोलकर Endpoint, API Key और Model भरें।','bot');return}addMsg('सोच रहा हूँ…','bot');let box=document.getElementById('messages'),wait=box.lastChild;try{let r=await fetch(s.e,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.k},body:JSON.stringify({model:s.m,messages:[{role:'system',content:'तुम Sarathi AI हो। सरल और उपयोगी हिंदी में जवाब दो।'},{role:'user',content:t}]})});if(!r.ok)throw Error('HTTP '+r.status);let d=await r.json(),ans=d?.choices?.[0]?.message?.content||d?.output_text||d?.response||'AI ने text जवाब नहीं दिया।';wait.remove();addMsg(ans,'bot');speak(ans)}catch(e){wait.remove();addMsg('AI connection नहीं हो पाया। Internet, Endpoint, API key और Model जाँचो।','bot')}}
+function startVoice(){let R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){toast('इस browser में voice input उपलब्ध नहीं है');return}let r=new R();r.lang='hi-IN';r.onstart=()=>toast('🎙️ बोलिए…');r.onresult=e=>{document.getElementById('chatInput').value=e.results[0][0].transcript;sendChat()};r.onerror=()=>toast('Voice शुरू नहीं हुआ');r.start()}
+function speak(t){if('speechSynthesis'in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang='hi-IN';speechSynthesis.speak(u)}}
+function study(){let t=document.getElementById('topic').value.trim();if(!t){toast('Topic लिखें');return}show('chat');document.getElementById('chatInput').value='मुझे '+t+' पर 5 study questions दो और बाद में मेरे answers check करना।';sendChat()}
+function saveNote(){let t=document.getElementById('noteText').value.trim(),n=document.getElementById('noteTitle').value.trim()||'Note';if(!t)return;let a=JSON.parse(localStorage.getItem('notes')||'[]');a.unshift({n,t,d:new Date().toLocaleString('hi-IN')});localStorage.setItem('notes',JSON.stringify(a));document.getElementById('noteText').value='';document.getElementById('noteTitle').value='';renderNotes();toast('Note सेव हो गया')}
+function renderNotes(){let a=JSON.parse(localStorage.getItem('notes')||'[]');document.getElementById('notesList').innerHTML=a.length?a.map((x,i)=>`<div class="note"><b>${esc(x.n)}</b><div class="small">${esc(x.d)}</div><div>${esc(x.t)}</div><button class="gray" onclick="delNote(${i})" style="margin-top:7px">Delete</button></div>`).join(''):'<p class="muted">अभी कोई note नहीं है।</p>'}
+function delNote(i){let a=JSON.parse(localStorage.getItem('notes')||'[]');a.splice(i,1);localStorage.setItem('notes',JSON.stringify(a));renderNotes()}
+function addReminder(){let t=document.getElementById('remText').value.trim(),tm=document.getElementById('remTime').value;if(!t||!tm){toast('Reminder और समय भरें');return}let a=JSON.parse(localStorage.getItem('rems')||'[]');a.push({t,tm,done:false});localStorage.setItem('rems',JSON.stringify(a));document.getElementById('remText').value='';document.getElementById('remTime').value='';renderRem();toast('Reminder जोड़ दिया')}
+function renderRem(){let a=JSON.parse(localStorage.getItem('rems')||'[]');document.getElementById('remList').innerHTML=a.length?a.map((x,i)=>`<div class="rem"><b>${esc(x.t)}</b><div class="small">${new Date(x.tm).toLocaleString('hi-IN')}</div><button class="gray" onclick="delRem(${i})" style="margin-top:7px">Delete</button></div>`).join(''):'<p class="muted">अभी कोई reminder नहीं है।</p>'}
+function delRem(i){let a=JSON.parse(localStorage.getItem('rems')||'[]');a.splice(i,1);localStorage.setItem('rems',JSON.stringify(a));renderRem()}
+async function notifyPermission(){if(!('Notification'in window)){toast('Notification उपलब्ध नहीं');return}let p=await Notification.requestPermission();toast(p==='granted'?'🔔 अनुमति मिल गई':'अनुमति नहीं मिली')}
+function check(){let a=JSON.parse(localStorage.getItem('rems')||'[]'),now=Date.now(),c=false;a.forEach(x=>{if(!x.done&&new Date(x.tm).getTime()<=now){x.done=true;c=true;if('Notification'in window&&Notification.permission==='granted')new Notification('सारथी AI Reminder',{body:x.t});else toast('⏰ '+x.t)}});if(c){localStorage.setItem('rems',JSON.stringify(a));renderRem()}}
+function a(x){document.getElementById('display').value+=x}function calc(){let d=document.getElementById('display');try{if(!/^[0-9+*/(). -]+$/.test(d.value))throw 0;d.value=Function('return '+d.value)()}catch{d.value='Error'}}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+load();setInterval(check,1000);
+</script>
+</body>
+</html>

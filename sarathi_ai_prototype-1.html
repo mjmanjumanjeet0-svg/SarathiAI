@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>सारथी AI</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#687386;--accent:#5b4bdb;--accent2:#7c6cf2;--border:#e4e7ef}
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.app{max-width:760px;margin:auto;min-height:100vh;padding-bottom:80px}
+header{padding:24px 18px 14px;background:linear-gradient(135deg,#5b4bdb,#8b7cf6);color:white;border-radius:0 0 24px 24px}
+h1{margin:0;font-size:28px}.sub{opacity:.88;margin-top:4px}
+main{padding:16px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 4px 14px #1720330b}
+button{border:0;border-radius:13px;padding:11px 14px;background:var(--accent);color:#fff;font-weight:650;cursor:pointer}
+button.secondary{background:#eef0ff;color:#4638b8} button.gray{background:#edf0f4;color:#344054}
+.card h3{margin:0 0 6px}.muted{color:var(--muted);font-size:14px}
+#chat{margin-top:14px;display:none}.messages{height:310px;overflow:auto;padding:8px;background:#fafbfe;border-radius:14px}
+.msg{max-width:88%;padding:11px 13px;border-radius:15px;margin:8px 0;line-height:1.4;white-space:pre-wrap}
+.user{margin-left:auto;background:#e9e5ff}.bot{background:#fff;border:1px solid var(--border)}
+.row{display:flex;gap:8px;margin-top:9px}.row input,.row textarea{flex:1;border:1px solid var(--border);border-radius:13px;padding:12px;font:inherit;outline:none}
+textarea{min-height:90px;resize:vertical}.hidden{display:none}
+.notes{margin-top:12px}.note{padding:12px;border:1px solid var(--border);border-radius:13px;margin-top:8px;background:#fff}
+.calc input{width:100%;padding:14px;font-size:20px;border:1px solid var(--border);border-radius:13px}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px}.keys button{padding:13px;background:#f0f2f7;color:#172033}.keys button.op{background:#e9e5ff;color:#4638b8}
+.study-list{padding-left:20px}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#172033;color:white;padding:10px 14px;border-radius:12px;display:none}
+footer{padding:16px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>🧭 सारथी AI</h1><div class="sub">तुम्हारा personal helper — अभी prototype</div></header>
+<main>
+<div class="grid">
+<div class="card"><h3>🤖 AI Chat</h3><div class="muted">सवाल पूछो या बोलकर बताओ</div><button onclick="show('chat')">Chat खोलें</button></div>
+<div class="card"><h3>📚 Study</h3><div class="muted">पढ़ाई और प्रश्न सहायता</div><button class="secondary" onclick="show('study')">Study खोलें</button></div>
+<div class="card"><h3>🧮 Calculator</h3><div class="muted">तेज़ हिसाब</div><button class="gray" onclick="show('calc')">Calculator</button></div>
+<div class="card"><h3>📝 Notes</h3><div class="muted">अपने notes सेव करो</div><button class="gray" onclick="show('notes')">Notes खोलें</button></div>
+</div>
+
+<section id="chat" class="card">
+<h3>🤖 सारथी से बात करें</h3>
+<div id="messages" class="messages"><div class="msg bot">नमस्ते! मैं सारथी AI prototype हूँ। अपना सवाल लिखो या 🎙️ दबाकर बोलो।</div></div>
+<div class="row"><input id="chatInput" placeholder="जैसे: आज क्या पढ़ूं?"><button onclick="sendChat()">भेजें</button><button class="secondary" onclick="voice()">🎙️</button></div>
+</section>
+
+<section id="study" class="card hidden">
+<h3>📚 Study Mode</h3>
+<p class="muted">आज के लिए छोटा study panel:</p>
+<ul class="study-list">
+<li>एक विषय चुनो और 25 मिनट पढ़ो।</li>
+<li>पढ़े हुए topic के 5 सवाल खुद से पूछो।</li>
+<li>जो नहीं समझ आया उसे AI Chat में भेजो।</li>
+</ul>
+<button onclick="studyPrompt()">मुझे एक सवाल दो</button>
+</section>
+
+<section id="calc" class="card hidden">
+<h3>🧮 Calculator</h3><input id="display" readonly value="">
+<div class="keys">
+<button onclick="add('7')">7</button><button onclick="add('8')">8</button><button onclick="add('9')">9</button><button class="op" onclick="add('/')">÷</button>
+<button onclick="add('4')">4</button><button onclick="add('5')">5</button><button onclick="add('6')">6</button><button class="op" onclick="add('*')">×</button>
+<button onclick="add('1')">1</button><button onclick="add('2')">2</button><button onclick="add('3')">3</button><button class="op" onclick="add('-')">−</button>
+<button onclick="add('0')">0</button><button onclick="add('.')">.</button><button onclick="calculate()">=</button><button class="op" onclick="add('+')">+</button>
+</div><br><button class="gray" onclick="clearCalc()">Clear</button>
+</section>
+
+<section id="notes" class="card hidden">
+<h3>📝 Notes</h3>
+<textarea id="noteText" placeholder="अपना note लिखें..."></textarea>
+<button onclick="saveNote()">सेव करें</button>
+<div id="noteList" class="notes"></div>
+</section>
+
+<section class="card" style="margin-top:14px">
+<h3>⚡ Quick Actions</h3>
+<div class="row" style="flex-wrap:wrap">
+<button class="secondary" onclick="toast('यह prototype अभी असली phone setting नहीं बदलता।')">📱 Device</button>
+<button class="secondary" onclick="toast('Reminder feature अगले चरण में जोड़ा जा सकता है।')">⏰ Reminder</button>
+<button class="secondary" onclick="navigator.clipboard?.writeText('सारथी AI')">📋 Copy</button>
+</div>
+<div class="muted" style="margin-top:10px">नोट: Chrome वाला prototype फोन के सभी system controls को अपने-आप नहीं चला सकता। असली device actions के लिए Android app + permissions चाहिए।</div>
+</section>
+</main>
+<footer>Sarathi AI Prototype • Local notes आपके browser में सेव होते हैं</footer>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const sections=['chat','study','calc','notes'];
+function show(id){sections.forEach(x=>document.getElementById(x).style.display='none');document.getElementById(id).style.display='block';window.scrollTo({top:document.getElementById(id).offsetTop-10,behavior:'smooth'});if(id==='notes')renderNotes();}
+function sendChat(){
+ const input=document.getElementById('chatInput'), text=input.value.trim(); if(!text)return;
+ addMsg(text,'user'); input.value='';
+ setTimeout(()=>addMsg(reply(text),'bot'),250);
+}
+function addMsg(t,c){const box=document.getElementById('messages');const d=document.createElement('div');d.className='msg '+c;d.textContent=t;box.appendChild(d);box.scrollTop=box.scrollHeight}
+function reply(t){
+ const s=t.toLowerCase();
+ if(s.includes('पढ़')||s.includes('study')) return 'चलो पढ़ाई शुरू करते हैं। अपना विषय और chapter बताओ; मैं उसे छोटे हिस्सों में बाँट सकता हूँ।';
+ if(s.includes('नोट')) return 'Notes section खोलकर अपना note सेव कर सकते हो।';
+ if(s.includes('कैलकुलेटर')||s.includes('हिसाब')) return 'Calculator खोलो और हिसाब करो।';
+ return 'मैं अभी prototype mode में हूँ। असली AI उत्तरों के लिए अगले चरण में AI API/model जोड़ना होगा।';
+}
+function voice(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){toast('इस browser में voice input उपलब्ध नहीं है।');return}
+ const r=new SR();r.lang='hi-IN';r.onresult=e=>{document.getElementById('chatInput').value=e.results[0][0].transcript;sendChat()};r.start();
+}
+function studyPrompt(){show('chat');document.getElementById('chatInput').value='मुझे पढ़ाई के लिए एक आसान सवाल दो';sendChat()}
+function add(x){document.getElementById('display').value+=x}
+function calculate(){const d=document.getElementById('display');try{if(!/^[0-9+\-*/.() ]+$/.test(d.value))throw 0;d.value=String(Function('return '+d.value)())}catch{d.value='Error'}}
+function clearCalc(){document.getElementById('display').value=''}
+function saveNote(){const t=document.getElementById('noteText').value.trim();if(!t)return;let a=JSON.parse(localStorage.getItem('sarathiNotes')||'[]');a.unshift({text:t,date:new Date().toLocaleString('hi-IN')});localStorage.setItem('sarathiNotes',JSON.stringify(a));document.getElementById('noteText').value='';renderNotes();toast('Note सेव हो गया')}
+function renderNotes(){const box=document.getElementById('noteList');let a=JSON.parse(localStorage.getItem('sarathiNotes')||'[]');box.innerHTML=a.map((n,i)=>`<div class="note"><b>${n.date}</b><div>${escapeHtml(n.text)}</div><button class="gray" onclick="delNote(${i})" style="margin-top:7px">Delete</button></div>`).join('')||'<div class="muted">अभी कोई note नहीं है।</div>'}
+function delNote(i){let a=JSON.parse(localStorage.getItem('sarathiNotes')||'[]');a.splice(i,1);localStorage.setItem('sarathiNotes',JSON.stringify(a));renderNotes()}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function toast(t){const x=document.getElementById('toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2200)}
+</script>
+</body>
+</html>

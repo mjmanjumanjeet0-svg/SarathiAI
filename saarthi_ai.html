@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>सारथी AI</title>
+<style>
+:root{--p:#5b35d5;--bg:#f5f6fb;--card:#fff;--text:#1d1d25}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--text)}
+.app{max-width:760px;margin:auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+header{background:linear-gradient(135deg,#5b35d5,#7b55ed);color:#fff;padding:18px 18px 16px;position:sticky;top:0;z-index:2}
+h1{margin:0;font-size:25px}header p{margin:3px 0 0;opacity:.9}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:10px;background:#fff;position:sticky;top:79px;z-index:2}
+.tab{border:0;background:#eeeafd;color:#4b3a94;padding:9px 4px;border-radius:12px;font-weight:600}.tab.active{background:var(--p);color:white}
+main{padding:14px;flex:1}.panel{display:none}.panel.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:15px;margin-bottom:12px;box-shadow:0 3px 14px #0000000b}
+.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.quick button{padding:14px;border:0;border-radius:15px;background:#fff;box-shadow:0 2px 10px #0001;text-align:left;font-size:15px}
+#chat{height:54vh;overflow:auto;padding:4px}.msg{max-width:84%;padding:10px 13px;border-radius:16px;margin:8px 0;white-space:pre-wrap;line-height:1.5}.bot{background:#eee9ff}.user{background:var(--p);color:#fff;margin-left:auto}
+form{display:flex;gap:8px;margin-top:8px}input,textarea,select{width:100%;padding:12px;border:1px solid #d5d5dd;border-radius:12px;font:inherit}button.primary{border:0;background:var(--p);color:#fff;padding:12px 16px;border-radius:12px;font-weight:700}
+textarea{min-height:140px;resize:vertical}.row{display:flex;gap:8px}.row>*{flex:1}.muted{color:#777;font-size:13px}
+.note{padding:12px;background:#fff;border-radius:12px;margin:8px 0;border-left:4px solid var(--p)}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>🧭 सारथी AI</h1><p>तुम्हारा डिजिटल सहायक</p></header>
+<nav class="tabs">
+<button class="tab active" data-p="home">होम</button><button class="tab" data-p="chatp">AI चैट</button>
+<button class="tab" data-p="study">पढ़ाई</button><button class="tab" data-p="tools">टूल्स</button>
+</nav>
+<main>
+<section id="home" class="panel active">
+<div class="card"><h2>नमस्ते 🙏</h2><p>मैं तुम्हारे काम को एक जगह रखने वाला सारथी AI प्रोटोटाइप हूँ।</p></div>
+<div class="quick">
+<button onclick="go('chatp');say('मुझे आज का काम व्यवस्थित करना है')">💬 AI से बात</button>
+<button onclick="go('study');focusStudy()">📚 पढ़ाई</button>
+<button onclick="go('tools');showTool('calc')">🧮 कैलकुलेटर</button>
+<button onclick="go('tools');showTool('notes')">📝 नोट्स</button>
+</div>
+<div class="card"><h3>⚠️ अभी क्या नहीं है?</h3><p class="muted">यह prototype अपने आप फोन कॉल, बैंकिंग, WhatsApp संदेश या दूसरे ऐप में कार्रवाई नहीं करता। उन कामों के लिए बाद में सुरक्षित permissions और संबंधित सेवाएँ जोड़नी होंगी।</p></div>
+</section>
+
+<section id="chatp" class="panel">
+<div class="card"><div id="chat"></div><form onsubmit="send(event)"><input id="msg" placeholder="सारथी से कुछ पूछो…"><button class="primary">भेजें</button></form></div>
+</section>
+
+<section id="study" class="panel">
+<div class="card"><h2>📚 पढ़ाई सहायक</h2><p class="muted">प्रश्न लिखो; यह prototype विषय के हिसाब से सहायता शुरू करेगा।</p>
+<textarea id="studyq" placeholder="जैसे: 1857 के विद्रोह के प्रमुख परिणाम लिखो"></textarea>
+<button class="primary" style="margin-top:8px" onclick="study()">समझाओ</button>
+<div id="studyout"></div></div>
+</section>
+
+<section id="tools" class="panel">
+<div class="card"><div class="row"><button class="primary" onclick="showTool('calc')">🧮 गणना</button><button class="primary" onclick="showTool('notes')">📝 नोट्स</button></div></div>
+<div id="calcTool" class="card"><h2>🧮 कैलकुलेटर</h2><input id="expr" placeholder="जैसे 125*18+50"><button class="primary" style="margin-top:8px" onclick="calc()">उत्तर निकालो</button><h3 id="ans"></h3></div>
+<div id="notesTool" class="card"><h2>📝 मेरे नोट्स</h2><textarea id="notes" placeholder="अपने नोट्स यहाँ लिखो…"></textarea><button class="primary" style="margin-top:8px" onclick="saveNotes()">सेव</button><p id="saved" class="muted"></p></div>
+</section>
+</main>
+</div>
+<script>
+const tabs=document.querySelectorAll('.tab');tabs.forEach(b=>b.onclick=()=>go(b.dataset.p));
+function go(id){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');tabs.forEach(x=>x.classList.toggle('active',x.dataset.p===id))}
+function add(t,w){let d=document.createElement('div');d.className='msg '+w;d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight}
+function answer(q){let s=q.toLowerCase().trim();
+if(!s)return'कुछ लिखो, मैं मदद करूँगा।';
+if(/^(हेलो|हाय|hello|hi|नमस्ते)/.test(s))return'नमस्ते 🙏 मैं सारथी AI हूँ। पढ़ाई, गणित, लिखाई और सामान्य कामों में मदद कर सकता हूँ।';
+if(s.includes('भारत')&&s.includes('राजधानी'))return'भारत की राजधानी नई दिल्ली है।';
+if(s.includes('बिहार')&&s.includes('राजधानी'))return'बिहार की राजधानी पटना है।';
+if(s.includes('क्या कर सकते')||s.includes('क्या क्या'))return'मैं इस prototype में चैट, पढ़ाई सहायता, गणना और नोट्स संभाल सकता हूँ। असली AI मॉडल जोड़ने पर मेरी समझ काफी बढ़ाई जा सकती है।';
+if(/^[0-9+\-*/().\s]+$/.test(s)){try{return'उत्तर: '+Function('"use strict";return ('+s+')')()}catch(e){}}
+return'मैंने सुना: “'+q+'”\n\nयह अभी prototype है। इस सवाल के लिए असली भाषा मॉडल/API जोड़ना अगला कदम होगा।'}
+function send(e){e.preventDefault();let x=msg.value.trim();if(!x)return;add(x,'user');msg.value='';setTimeout(()=>add(answer(x),'bot'),180)}
+add('नमस्ते 🙏 मैं सारथी AI हूँ। कुछ पूछकर देखो।','bot');
+function calc(){let s=expr.value;try{if(!/^[0-9+\-*/().\s]+$/.test(s))throw 0;ans.textContent='उत्तर: '+Function('"use strict";return ('+s+')')()}catch(e){ans.textContent='कृपया केवल गणित का expression लिखें।'}}
+function saveNotes(){localStorage.saarthiNotes=notes.value;saved.textContent='नोट्स इस ब्राउज़र में सेव हो गए।'}
+notes.value=localStorage.saarthiNotes||'';
+function showTool(x){calcTool.style.display=x==='calc'?'block':'none';notesTool.style.display=x==='notes'?'block':'none'}
+showTool('calc');
+function study(){let q=studyq.value.trim();if(!q)return;studyout.innerHTML='<div class="note"><b>सारथी:</b><br>'+q+'<br><br>यह prototype अभी विषय पहचानकर असली उत्तर नहीं बनाता। अगले संस्करण में AI मॉडल जोड़कर प्रश्न का पूरा उत्तर और सरल व्याख्या दी जा सकती है।</div>'}
+function focusStudy(){setTimeout(()=>studyq.focus(),50)}
+</script>
+</body></html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#5b4bdb">
+<title>सारथी AI — Personal Assistant</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#687386;--a:#5b4bdb;--a2:#7c6cf2;--b:#e4e7ef;--ok:#138a4b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+.app{max-width:820px;margin:auto;min-height:100vh;padding-bottom:70px}
+header{padding:25px 18px 18px;background:linear-gradient(135deg,var(--a),var(--a2));color:white;border-radius:0 0 26px 26px}
+h1{margin:0;font-size:29px}.sub{opacity:.9;margin-top:5px}
+main{padding:15px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--b);border-radius:18px;padding:16px;box-shadow:0 4px 14px #1720330b;margin-bottom:12px}
+button{border:0;border-radius:13px;padding:11px 14px;background:var(--a);color:white;font-weight:650;cursor:pointer}
+button.secondary{background:#eceaff;color:#4638b8}button.gray{background:#edf0f4;color:#344054}
+button.danger{background:#ffe8e8;color:#a11}.muted{color:var(--muted);font-size:14px}
+.panel{display:none}.panel.active{display:block}
+.row{display:flex;gap:8px;margin-top:9px}.row>*{min-width:0}
+input,textarea,select{border:1px solid var(--b);border-radius:13px;padding:12px;font:inherit;outline:none;width:100%}
+textarea{min-height:90px;resize:vertical}.messages{height:360px;overflow:auto;padding:8px;background:#fafbfe;border-radius:14px}
+.msg{max-width:90%;padding:11px 13px;border-radius:15px;margin:8px 0;line-height:1.45;white-space:pre-wrap}.user{margin-left:auto;background:#e9e5ff}.bot{background:#fff;border:1px solid var(--b)}
+.tabs{display:flex;gap:7px;overflow:auto;padding:4px 0 12px}.tabs button{white-space:nowrap}
+.note,.rem{padding:12px;border:1px solid var(--b);border-radius:13px;margin-top:8px;background:#fff}
+.small{font-size:12px;color:var(--muted)}.ok{color:var(--ok);font-weight:650}
+.calc input{font-size:21px}.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px}.keys button{padding:13px;background:#f0f2f7;color:#172033}.keys .op{background:#e9e5ff;color:#4638b8}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#172033;color:#fff;padding:10px 14px;border-radius:12px;display:none;z-index:5}
+@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}.row{flex-wrap:wrap}.row button{flex:none}.messages{height:330px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>🧭 सारथी AI</h1>
+  <div class="sub">तुम्हारा personal AI helper</div>
+</header>
+<main>
+<div class="tabs">
+<button onclick="show('chat')">🤖 Chat</button>
+<button onclick="show('study')">📚 Study</button>
+<button onclick="show('notes')">📝 Notes</button>
+<button onclick="show('rem')">⏰ Reminders</button>
+<button onclick="show('calc')">🧮 Calculator</button>
+<button onclick="show('settings')">⚙️ Settings</button>
+</div>
+
+<div id="home" class="grid">
+<div class="card"><h3>🤖 असली AI Chat</h3><div class="muted">AI model से बातचीत</div><button onclick="show('chat')">Chat खोलें</button></div>
+<div class="card"><h3>🎙️ Voice</h3><div class="muted">बोलकर पूछो और जवाब सुनो</div><button class="secondary" onclick="startVoice()">Voice शुरू करें</button></div>
+<div class="card"><h3>📚 Study</h3><div class="muted">Topic, सवाल और revision</div><button class="secondary" onclick="show('study')">Study खोलें</button></div>
+<div class="card"><h3>⏰ Reminder</h3><div class="muted">पढ़ाई/काम के reminders</div><button class="gray" onclick="show('rem')">Reminder बनाएं</button></div>
+</div>
+
+<section id="chat" class="card panel">
+<h3>🤖 सारथी से बात करें</h3>
+<div class="small" id="aiStatus">AI API सेट करें, फिर असली AI जवाब मिलेगा।</div>
+<div id="messages" class="messages"><div class="msg bot">नमस्ते! मैं सारथी हूँ। अपना सवाल लिखो या 🎙️ दबाकर बोलो।</div></div>
+<div class="row"><input id="chatInput" placeholder="जैसे: मुझे 1857 का विद्रोह समझाओ"><button onclick="sendChat()">भेजें</button><button class="secondary" onclick="startVoice()">🎙️</button><button class="gray" onclick="speakLast()">🔊</button></div>
+</section>
+
+<section id="study" class="card panel">
+<h3>📚 Study Mode</h3>
+<p class="muted">विषय बताओ और सारथी उससे पढ़ाई का सवाल बनाकर देगा।</p>
+<div class="row"><input id="studyTopic" placeholder="जैसे: इतिहास — 1857 का विद्रोह"><button onclick="makeStudy()">सवाल बनाओ</button></div>
+<div id="studyOut" class="note" style="display:none"></div>
+</section>
+
+<section id="notes" class="card panel">
+<h3>📝 Notes</h3>
+<textarea id="noteText" placeholder="अपना note लिखें..."></textarea>
+<div class="row"><input id="noteTitle" placeholder="Note का नाम (जैसे इतिहास)"><button onclick="saveNote()">सेव करें</button></div>
+<div id="noteList"></div>
+</section>
+
+<section id="rem" class="card panel">
+<h3>⏰ Reminders</h3>
+<p class="muted">यह browser-based reminder है। पेज खुला रहने पर समय आने पर notification/alert दिखेगा।</p>
+<div class="row"><input id="remText" placeholder="जैसे: 7 बजे इतिहास पढ़ना है"><input id="remTime" type="datetime-local"><button onclick="addReminder()">जोड़ें</button></div>
+<div class="row"><button class="secondary" onclick="requestNotifications()">🔔 Notification अनुमति</button></div>
+<div id="remList"></div>
+</section>
+
+<section id="calc" class="card panel">
+<h3>🧮 Calculator</h3><input id="display" readonly>
+<div class="keys">
+<button onclick="add('7')">7</button><button onclick="add('8')">8</button><button onclick="add('9')">9</button><button class="op" onclick="add('/')">÷</button>
+<button onclick="add('4')">4</button><button onclick="add('5')">5</button><button onclick="add('6')">6</button><button class="op" onclick="add('*')">×</button>
+<button onclick="add('1')">1</button><button onclick="add('2')">2</button><button onclick="add('3')">3</button><button class="op" onclick="add('-')">−</button>
+<button onclick="add('0')">0</button><button onclick="add('.')">.</button><button onclick="calculate()">=</button><button class="op" onclick="add('+')">+</button>
+</div><br><button class="gray" onclick="clearCalc()">Clear</button>
+</section>
+
+<section id="settings" class="card panel">
+<h3>⚙️ AI Settings</h3>
+<p class="muted">API key को HTML में hard-code नहीं किया गया है। इसे अपने device पर ही रखें।</p>
+<label class="small">API Endpoint</label>
+<input id="endpoint" placeholder="https://your-provider.example/v1/chat/completions">
+<label class="small">API Key</label>
+<input id="apiKey" type="password" placeholder="अपनी API key">
+<label class="small">Model</label>
+<input id="model" placeholder="अपना model नाम">
+<div class="row"><button onclick="saveSettings()">सेटिंग सेव करें</button><button class="gray" onclick="testAI()">AI Test</button></div>
+<p class="small">सुरक्षा: यह frontend prototype key को localStorage में रखता है। Production app में API key को backend/server के पीछे रखना बेहतर है।</p>
+</section>
+</main>
+<footer>Sarathi AI • Notes और settings इस browser में local रूप से रखे जाते हैं।</footer>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const sections=['chat','study','notes','rem','calc','settings'];
+let lastBot='';
+function show(id){sections.forEach(x=>document.getElementById(x).classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='notes')renderNotes();if(id==='rem')renderReminders();window.scrollTo({top:0,behavior:'smooth'})}
+function toast(t){const x=document.getElementById('toast');x.textContent=t;x.style.display='block';setTimeout(()=>x.style.display='none',2400)}
+function addMsg(t,c){const box=document.getElementById('messages'),d=document.createElement('div');d.className='msg '+c;d.textContent=t;box.appendChild(d);box.scrollTop=box.scrollHeight;if(c==='bot')lastBot=t}
+function settings(){return{endpoint:localStorage.getItem('sarathiEndpoint')||'',key:localStorage.getItem('sarathiKey')||'',model:localStorage.getItem('sarathiModel')||''}}
+function saveSettings(){localStorage.setItem('sarathiEndpoint',document.getElementById('endpoint').value.trim());localStorage.setItem('sarathiKey',document.getElementById('apiKey').value.trim());localStorage.setItem('sarathiModel',document.getElementById('model').value.trim());updateStatus();toast('AI settings सेव हो गईं')}
+function loadSettings(){let s=settings();document.getElementById('endpoint').value=s.endpoint;document.getElementById('apiKey').value=s.key;document.getElementById('model').value=s.model;updateStatus()}
+function updateStatus(){let s=settings();document.getElementById('aiStatus').textContent=s.endpoint&&s.key&&s.model?'✅ AI API configured — अब असली AI request भेजी जा सकती है।':'⚠️ Settings में API Endpoint, API Key और Model भरें।'}
+async function sendChat(){
+ const input=document.getElementById('chatInput'),t=input.value.trim();if(!t)return;
+ addMsg(t,'user');input.value='';
+ let s=settings();
+ if(!(s.endpoint&&s.key&&s.model)){addMsg('AI अभी connect नहीं है। Settings में API Endpoint, API Key और Model भरने के बाद फिर सवाल भेजो।','bot');return}
+ addMsg('सोच रहा हूँ…','bot');let box=document.getElementById('messages');let thinking=box.lastChild;
+ try{
+   let r=await fetch(s.endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.key},body:JSON.stringify({model:s.model,messages:[{role:'system',content:'तुम Sarathi AI हो। उपयोगी, साफ और सरल हिंदी में जवाब दो।'},{role:'user',content:t}],temperature:0.7})});
+   if(!r.ok)throw new Error('HTTP '+r.status);
+   let data=await r.json();
+   let ans=data?.choices?.[0]?.message?.content || data?.output_text || data?.response || 'AI ने कोई text उत्तर नहीं दिया।';
+   thinking.remove();addMsg(ans,'bot');speak(ans);
+ }catch(e){thinking.remove();addMsg('AI से connection नहीं हो पाया। Endpoint, API key, model और internet connection जाँचो।\\n\\nError: '+e.message,'bot')}
+}
+async function testAI(){document.getElementById('chatInput').value='नमस्ते सारथी';show('chat');sendChat()}
+function startVoice(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('इस browser में voice input उपलब्ध नहीं है।');return}
+ const r=new SR();r.lang='hi-IN';r.interimResults=false;r.onstart=()=>toast('🎙️ बोलिए…');r.onerror=()=>toast('Voice input शुरू नहीं हो पाया');r.onresult=e=>{document.getElementById('chatInput').value=e.results[0][0].transcript;sendChat()};r.start()
+}
+function speak(t){if('speechSynthesis' in window){speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang='hi-IN';speechSynthesis.speak(u)}}
+function speakLast(){if(lastBot)speak(lastBot)}
+function makeStudy(){let t=document.getElementById('studyTopic').value.trim();if(!t){toast('Topic लिखो');return}show('chat');document.getElementById('chatInput').value='मुझे "'+t+'" पर 5 आसान से मध्यम स्तर के study questions दो, फिर मेरे answers check करना।';sendChat()}
+function saveNote(){let t=document.getElementById('noteText').value.trim(),title=document.getElementById('noteTitle').value.trim()||'Untitled';if(!t)return;let a=JSON.parse(localStorage.getItem('sarathiNotes')||'[]');a.unshift({title,text:t,date:new Date().toLocaleString('hi-IN')});localStorage.setItem('sarathiNotes',JSON.stringify(a));document.getElementById('noteText').value='';document.getElementById('noteTitle').value='';renderNotes();toast('Note सेव हो गया')}
+function renderNotes(){let a=JSON.parse(localStorage.getItem('sarathiNotes')||'[]'),box=document.getElementById('noteList');box.innerHTML=a.length?a.map((n,i)=>'<div class="note"><b>'+escapeHtml(n.title)+'</b><div class="small">'+escapeHtml(n.date)+'</div><div style="margin-top:5px">'+escapeHtml(n.text)+'</div><button class="danger" onclick="delNote('+i+')" style="margin-top:8px">Delete</button></div>').join(''):'<p class="muted">अभी कोई note नहीं है।</p>'}
+function delNote(i){let a=JSON.parse(localStorage.getItem('sarathiNotes')||'[]');a.splice(i,1);localStorage.setItem('sarathiNotes',JSON.stringify(a));renderNotes()}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function requestNotifications(){if(!('Notification' in window)){toast('इस browser में notifications उपलब्ध नहीं हैं।');return}let p=await Notification.requestPermission();toast(p==='granted'?'🔔 Notification अनुमति मिल गई':'Notification अनुमति नहीं मिली')}
+function addReminder(){let text=document.getElementById('remText').value.trim(),time=document.getElementById('remTime').value;if(!text||!time){toast('Reminder और समय दोनों भरें');return}let a=JSON.parse(localStorage.getItem('sarathiReminders')||'[]');a.push({text,time,done:false});a.sort((x,y)=>new Date(x.time)-new Date(y.time));localStorage.setItem('sarathiReminders',JSON.stringify(a));document.getElementById('remText').value='';document.getElementById('remTime').value='';renderReminders();toast('Reminder जोड़ दिया')}
+function renderReminders(){let a=JSON.parse(localStorage.getItem('sarathiReminders')||'[]'),box=document.getElementById('remList');box.innerHTML=a.length?a.map((r,i)=>'<div class="rem"><b>'+escapeHtml(r.text)+'</b><div class="small">'+new Date(r.time).toLocaleString('hi-IN')+'</div><button class="danger" onclick="delReminder('+i+')" style="margin-top:8px">Delete</button></div>').join(''):'<p class="muted">अभी कोई reminder नहीं है।</p>'}
+function delReminder(i){let a=JSON.parse(localStorage.getItem('sarathiReminders')||'[]');a.splice(i,1);localStorage.setItem('sarathiReminders',JSON.stringify(a));renderReminders()}
+function checkReminders(){let a=JSON.parse(localStorage.getItem('sarathiReminders')||'[]'),now=Date.now(),changed=false;a.forEach(r=>{if(!r.done&&new Date(r.time).getTime()<=now){r.done=true;changed=true;if('Notification' in window&&Notification.permission==='granted')new Notification('सारथी AI Reminder',{body:r.text});else alert('⏰ Reminder: '+r.text)}});if(changed){localStorage.setItem('sarathiReminders',JSON.stringify(a));renderReminders()}}
+function add(x){document.getElementById('display').value+=x}
+function calculate(){let d=document.getElementById('display');try{if(!/^[0-9+\\-*/.() ]+$/.test(d.value))throw 0;d.value=String(Function('return '+d.value)())}catch{d.value='Error'}}
+function clearCalc(){document.getElementById('display').value=''}
+loadSettings();renderNotes();renderReminders();setInterval(checkReminders,1000);
+</script>
+</body>
+</html>
